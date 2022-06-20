@@ -112,6 +112,9 @@ export const create = (factory: Factory.Type, options?: Options): Types => {
     },
     escapeDeclarationText: (text: string) => {
       // console.log(`escapeDeclarationText: ${text}` + `-> ${convertReservedWord(convertString(text).replace(/\./g, "$"))}`.padStart(100, " "));
+      if (text.match(/^[0-9]/)) {
+        text = `_${text}`;
+      }
       return convertReservedWord(convertString(text).replace(/\./g, "$"));
     },
     escapeReferenceDeclarationText: (text: string) => {
