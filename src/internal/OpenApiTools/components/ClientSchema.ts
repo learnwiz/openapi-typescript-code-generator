@@ -22,24 +22,28 @@ export const generatePropertySignatures = (
     return [];
   }
   const required: string[] = schema.required || [];
-  return Object.entries(schema.properties).map(([propertyName, property]) => {
-    if (!property) {
+  return Object.entries(schema.properties)
+    .filter(property => {
+      return !(property[1] as any)["readOnly"];
+    })
+    .map(([propertyName, property]) => {
+      if (!property) {
+        return factory.PropertySignature.create({
+          name: convertContext.escapePropertySignatureName(propertyName),
+          optional: !required.includes(propertyName),
+          comment: [schema.title, schema.description].filter(v => !!v).join("\n\n"),
+          type: factory.TypeNode.create({
+            type: "any",
+          }),
+        });
+      }
       return factory.PropertySignature.create({
         name: convertContext.escapePropertySignatureName(propertyName),
         optional: !required.includes(propertyName),
-        comment: [schema.title, schema.description].filter(v => !!v).join("\n\n"),
-        type: factory.TypeNode.create({
-          type: "any",
-        }),
+        type: ToTypeNode.convert(entryPoint, currentPoint, factory, property, context, convertContext, { parent: schema }),
+        comment: typeof property !== "boolean" ? [property.title, property.description].filter(v => !!v).join("\n\n") : undefined,
       });
-    }
-    return factory.PropertySignature.create({
-      name: convertContext.escapePropertySignatureName(propertyName),
-      optional: !required.includes(propertyName),
-      type: ToTypeNode.convert(entryPoint, currentPoint, factory, property, context, convertContext, { parent: schema }),
-      comment: typeof property !== "boolean" ? [property.title, property.description].filter(v => !!v).join("\n\n") : undefined,
     });
-  });
 };
 
 export const generateInterface = (
