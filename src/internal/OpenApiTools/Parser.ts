@@ -2,6 +2,7 @@ import ts from "typescript";
 
 import type { CodeGenerator, OpenApi } from "../../types";
 import * as TypeScriptCodeGenerator from "../TsGenerator";
+import * as ClientSchemas from "./components/ClientSchemas";
 import * as Headers from "./components/Headers";
 import * as Parameters from "./components/Parameters";
 import * as RequestBodies from "./components/RequestBodies";
@@ -39,6 +40,15 @@ export class Parser {
     if (rootSchema.components) {
       if (rootSchema.components.schemas) {
         Schemas.generateNamespace(
+          this.entryPoint,
+          this.currentPoint,
+          this.store,
+          this.factory,
+          rootSchema.components.schemas,
+          toTypeNodeContext,
+          this.convertContext,
+        );
+        ClientSchemas.generateNamespace(
           this.entryPoint,
           this.currentPoint,
           this.store,

@@ -1,5 +1,6 @@
 export const Components = {
   Schemas: "Schemas",
+  ClientSchemas: "ClientSchemas",
   Parameters: "Parameters",
   Headers: "Headers",
   SecuritySchemas: "SecuritySchemas",
