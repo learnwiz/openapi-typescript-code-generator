@@ -23,7 +23,7 @@ export const generateNamespace = (
   const basePath = `${parentPath}/${name}`;
   store.addStatement(basePath, {
     kind: "namespace",
-    name,
+    name: converterContext.escapeDeclarationText(name),
     comment: response.description,
   });
 
