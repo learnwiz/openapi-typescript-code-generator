@@ -40,7 +40,10 @@ export const generatePropertySignatures = (
       return factory.PropertySignature.create({
         name: convertContext.escapePropertySignatureName(propertyName),
         optional: !required.includes(propertyName),
-        type: ToTypeNode.convert(entryPoint, currentPoint, factory, property, context, convertContext, { parent: schema }),
+        type: ToTypeNode.convert(entryPoint, currentPoint, factory, property, context, convertContext, {
+          parent: schema,
+          useClientSchema: true,
+        }),
         comment: typeof property !== "boolean" ? [property.title, property.description].filter(v => !!v).join("\n\n") : undefined,
       });
     });
@@ -61,7 +64,9 @@ export const generateInterface = (
   let members: ts.TypeElement[] = [];
   const propertySignatures = generatePropertySignatures(entryPoint, currentPoint, factory, schema, context, convertContext);
   if (Guard.isObjectSchemaWithAdditionalProperties(schema)) {
-    const additionalProperties = ToTypeNode.convertAdditionalProperties(entryPoint, currentPoint, factory, schema, context, convertContext);
+    const additionalProperties = ToTypeNode.convertAdditionalProperties(entryPoint, currentPoint, factory, schema, context, convertContext, {
+      useClientSchema: true,
+    });
     if (schema.additionalProperties === true) {
       members = members.concat(additionalProperties);
     } else {
@@ -91,7 +96,7 @@ export const generateArrayTypeAlias = (
     export: true,
     name: convertContext.escapeDeclarationText(name),
     comment: [schema.title, schema.description].filter(v => !!v).join("\n\n"),
-    type: ToTypeNode.convert(entryPoint, currentPoint, factory, schema, context, convertContext),
+    type: ToTypeNode.convert(entryPoint, currentPoint, factory, schema, context, convertContext, { useClientSchema: true }),
   });
 };
 
@@ -196,6 +201,7 @@ export const generateMultiTypeAlias = (
     ToTypeNode.convert,
     convertContext,
     multiType,
+    { useClientSchema: true },
   );
   return factory.TypeAliasDeclaration.create({
     export: true,

@@ -36,11 +36,14 @@ export const generateNamespace = (
         const createTypeNode = () => {
           if (depth === 2) {
             return factory.TypeReferenceNode.create({
-              name: convertContext.escapeReferenceDeclarationText(maybeResolvedName),
+              name: convertContext.escapeReferenceDeclarationText(`Client${maybeResolvedName}`),
             });
           }
           const schema = DotProp.get(context.rootSchema, pathArray.join(".")) as any;
-          return ToTypeNode.convert(entryPoint, currentPoint, factory, schema, context, convertContext, { parent: schema });
+          return ToTypeNode.convert(entryPoint, currentPoint, factory, schema, context, convertContext, {
+            parent: schema,
+            useClientSchema: true,
+          });
         };
         return store.addStatement(`${basePath}/${name}`, {
           kind: "typeAlias",

@@ -53,8 +53,9 @@ export const generateMultiTypeNode = (
   convert: Convert,
   convertContext: ConverterContext.Types,
   multiType: "oneOf" | "allOf" | "anyOf",
+  option?: Option,
 ): ts.TypeNode => {
-  const typeNodes = schemas.map(schema => convert(entryPoint, currentPoint, factory, schema, setReference, convertContext));
+  const typeNodes = schemas.map(schema => convert(entryPoint, currentPoint, factory, schema, setReference, convertContext, option));
   if (multiType === "oneOf") {
     return factory.UnionTypeNode.create({
       typeNodes,
@@ -334,6 +335,7 @@ export const convertAdditionalProperties = (
   schema: ObjectSchemaWithAdditionalProperties,
   setReference: Context,
   convertContext: ConverterContext.Types,
+  option?: Option,
 ): ts.IndexSignatureDeclaration => {
   // // https://swagger.io/docs/specification/data-models/dictionaries/#free-form
   if (schema.additionalProperties === true) {
@@ -344,7 +346,10 @@ export const convertAdditionalProperties = (
   }
   const additionalProperties = factory.IndexSignatureDeclaration.create({
     name: "key",
-    type: convert(entryPoint, currentPoint, factory, schema.additionalProperties, setReference, convertContext, { parent: schema.properties }),
+    type: convert(entryPoint, currentPoint, factory, schema.additionalProperties, setReference, convertContext, {
+      ...option,
+      parent: schema.properties,
+    }),
   });
   return additionalProperties;
 };
