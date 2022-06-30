@@ -23,6 +23,7 @@ export const generateInterface = (
     requestBody.content || {},
     context,
     converterContext,
+    { useClientSchema: true },
   );
   return factory.InterfaceDeclaration.create({
     export: true,

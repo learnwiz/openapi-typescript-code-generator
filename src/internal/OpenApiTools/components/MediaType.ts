@@ -13,11 +13,12 @@ export const generatePropertySignature = (
   schema: OpenApi.Schema,
   context: ToTypeNode.Context,
   converterContext: ConverterContext.Types,
+  option?: ToTypeNode.Option,
 ): ts.PropertySignature => {
   return factory.PropertySignature.create({
     name: converterContext.escapePropertySignatureName(protocol),
     optional: false,
-    type: ToTypeNode.convert(entryPoint, currentPoint, factory, schema, context, converterContext),
+    type: ToTypeNode.convert(entryPoint, currentPoint, factory, schema, context, converterContext, option),
     comment: schema.description,
   });
 };
@@ -29,12 +30,15 @@ export const generatePropertySignatures = (
   content: Record<string, OpenApi.MediaType>,
   context: ToTypeNode.Context,
   converterContext: ConverterContext.Types,
+  option?: ToTypeNode.Option,
 ): ts.PropertySignature[] => {
   return Object.entries(content).reduce<ts.PropertySignature[]>((previous, [protocol, mediaType]) => {
     if (!mediaType.schema) {
       return previous;
     }
-    return previous.concat(generatePropertySignature(entryPoint, currentPoint, factory, protocol, mediaType.schema, context, converterContext));
+    return previous.concat(
+      generatePropertySignature(entryPoint, currentPoint, factory, protocol, mediaType.schema, context, converterContext, option),
+    );
   }, []);
 };
 

@@ -41,6 +41,7 @@ export type Convert = (
 
 export interface Option {
   parent?: any;
+  useClientSchema?: boolean;
 }
 
 export const generateMultiTypeNode = (
@@ -109,8 +110,17 @@ export const convert: Convert = (
       context.setReferenceHandler(currentPoint, reference);
       const { maybeResolvedName, depth, pathArray } = context.resolveReferencePath(currentPoint, reference.path);
       if (depth === 2) {
+        if (option?.useClientSchema) {
+          return factory.TypeReferenceNode.create({
+            name: converterContext.escapeReferenceDeclarationText(`Client${maybeResolvedName}`),
+          });
+        }
         return factory.TypeReferenceNode.create({ name: converterContext.escapeReferenceDeclarationText(maybeResolvedName) });
       } else {
+        if (option?.useClientSchema) {
+          // todo
+          console.log("Currently useClientSchema is not supported when depth is not 2.");
+        }
         const resolveSchema = DotProp.get(context.rootSchema, pathArray.join(".")) as any;
         return convert(entryPoint, currentPoint, factory, resolveSchema, context, converterContext, { parent: schema });
       }
