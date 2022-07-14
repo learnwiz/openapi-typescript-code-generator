@@ -123,7 +123,7 @@ export const convert: Convert = (
           console.log("Currently useClientSchema is not supported when depth is not 2.");
         }
         const resolveSchema = DotProp.get(context.rootSchema, pathArray.join(".")) as any;
-        return convert(entryPoint, currentPoint, factory, resolveSchema, context, converterContext, { parent: schema });
+        return convert(entryPoint, currentPoint, factory, resolveSchema, context, converterContext, { ...option, parent: schema });
       }
     }
     // サポートしているディレクトリに対して存在する場合
@@ -134,27 +134,27 @@ export const convert: Convert = (
       return factory.TypeReferenceNode.create({ name: context.resolveReferencePath(currentPoint, reference.path).name });
     }
     // サポートしていないディレクトリに存在する場合、直接Interface、もしくはTypeAliasを作成
-    return convert(entryPoint, reference.referencePoint, factory, reference.data, context, converterContext, { parent: schema });
+    return convert(entryPoint, reference.referencePoint, factory, reference.data, context, converterContext, { ...option, parent: schema });
   }
 
   if (Guard.isOneOfSchema(schema)) {
     return nullable(
       factory,
-      generateMultiTypeNode(entryPoint, currentPoint, factory, schema.oneOf, context, convert, converterContext, "oneOf"),
+      generateMultiTypeNode(entryPoint, currentPoint, factory, schema.oneOf, context, convert, converterContext, "oneOf", option),
       !!schema.nullable,
     );
   }
   if (Guard.isAllOfSchema(schema)) {
     return nullable(
       factory,
-      generateMultiTypeNode(entryPoint, currentPoint, factory, schema.allOf, context, convert, converterContext, "allOf"),
+      generateMultiTypeNode(entryPoint, currentPoint, factory, schema.allOf, context, convert, converterContext, "allOf", option),
       !!schema.nullable,
     );
   }
   if (Guard.isAnyOfSchema(schema)) {
     return nullable(
       factory,
-      generateMultiTypeNode(entryPoint, currentPoint, factory, schema.anyOf, context, convert, converterContext, "anyOf"),
+      generateMultiTypeNode(entryPoint, currentPoint, factory, schema.anyOf, context, convert, converterContext, "anyOf", option),
       !!schema.nullable,
     );
   }
@@ -170,7 +170,7 @@ export const convert: Convert = (
   if (!schema.type) {
     const inferredSchema = InferredType.getInferredType(schema);
     if (inferredSchema) {
-      return convert(entryPoint, currentPoint, factory, inferredSchema, context, converterContext, { parent: schema });
+      return convert(entryPoint, currentPoint, factory, inferredSchema, context, converterContext, { ...option, parent: schema });
     }
     // typeを指定せずに、nullableのみを指定している場合に type object変換する
     if (typeof schema.nullable === "boolean") {
@@ -262,7 +262,7 @@ export const convert: Convert = (
       const typeNode = factory.TypeNode.create({
         type: schema.type,
         value: schema.items
-          ? convert(entryPoint, currentPoint, factory, schema.items, context, converterContext, { parent: schema })
+          ? convert(entryPoint, currentPoint, factory, schema.items, context, converterContext, { ...option, parent: schema })
           : factory.TypeNode.create({
               type: "undefined",
             }),
@@ -282,7 +282,7 @@ export const convert: Convert = (
       const value: ts.PropertySignature[] = Object.entries(schema.properties || {}).map(([name, jsonSchema]) => {
         return factory.PropertySignature.create({
           name: converterContext.escapePropertySignatureName(name),
-          type: convert(entryPoint, currentPoint, factory, jsonSchema, context, converterContext, { parent: schema.properties }),
+          type: convert(entryPoint, currentPoint, factory, jsonSchema, context, converterContext, { ...option, parent: schema.properties }),
           optional: !required.includes(name),
           comment: typeof jsonSchema !== "boolean" ? jsonSchema.description : undefined,
         });
@@ -291,6 +291,7 @@ export const convert: Convert = (
         const additionalProperties = factory.IndexSignatureDeclaration.create({
           name: "key",
           type: convert(entryPoint, currentPoint, factory, schema.additionalProperties, context, converterContext, {
+            ...option,
             parent: schema.properties,
           }),
         });
