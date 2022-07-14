@@ -181,7 +181,7 @@ export const convert: Convert = (
     }
     if (option && option.parent) {
       const message = [
-        "Schema Type is not found and is converted to the type any. The parent Schema is as follows.",
+        "Schema Type is not found and is converted to the type unknown. The parent Schema is as follows.",
         "",
         JSON.stringify(option.parent),
         "",
@@ -189,7 +189,7 @@ export const convert: Convert = (
       Logger.info(message);
     }
     const typeNode = factory.TypeNode.create({
-      type: "any",
+      type: "unknown",
     });
     return typeNode;
     // Logger.showFilePosition(entryPoint, currentPoint);
