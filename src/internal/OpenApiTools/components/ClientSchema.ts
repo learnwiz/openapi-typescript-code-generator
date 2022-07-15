@@ -23,8 +23,20 @@ export const generatePropertySignatures = (
   }
   const required: string[] = schema.required || [];
   return Object.entries(schema.properties)
-    .filter(property => {
-      return !(property[1] as any)["readOnly"];
+    .filter(([_, property]) => {
+      if (typeof property === "boolean") {
+        return true;
+      } else if (Guard.isReference(property)) {
+        const schemaName = property.$ref.match(/^#\/components\/schemas\/(.+)$/)?.[1];
+        if (!schemaName) return false;
+        const original = context.rootSchema.components?.schemas?.[schemaName];
+        if (!original || !Guard.isObjectSchema(original)) return false;
+        return !original.readOnly;
+      } else if (Guard.isObjectSchema(property)) {
+        return !property.readOnly;
+      } else {
+        return true;
+      }
     })
     .map(([propertyName, property]) => {
       if (!property) {
