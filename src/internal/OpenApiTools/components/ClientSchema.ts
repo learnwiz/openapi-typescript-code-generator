@@ -1,4 +1,5 @@
-import ts, { skipPartiallyEmittedExpressions } from "typescript";
+import type { JSONSchema7Definition } from "json-schema";
+import ts from "typescript";
 
 import type { OpenApi } from "../../../types";
 import { FeatureDevelopmentError } from "../../Exception";
@@ -9,6 +10,37 @@ import * as ToTypeNode from "../toTypeNode";
 import type { AnySchema, ArraySchema, ObjectSchema, PrimitiveSchema } from "../types";
 import type * as Walker from "../Walker";
 import * as ExternalDocumentation from "./ExternalDocumentation";
+
+function isReadOnlySchema(schema: JSONSchema7Definition, context: ToTypeNode.Context): boolean | undefined {
+  while (Guard.isReference(schema)) {
+    const schemaName = schema.$ref.match(/^#\/components\/schemas\/(.+)$/)?.[1];
+    if (!schemaName) return undefined;
+    const dereffed = context.rootSchema.components?.schemas?.[schemaName];
+    if (dereffed) {
+      schema = dereffed;
+    } else {
+      return undefined;
+    }
+  }
+
+  if (typeof schema === "boolean") {
+    return undefined;
+  }
+
+  if (Guard.isAllOfSchema(schema)) {
+    return schema.allOf.map(s => isReadOnlySchema(s, context)).find((s): s is boolean => typeof s !== undefined);
+  }
+
+  if (Guard.isOneOfSchema(schema)) {
+    return [...schema.oneOf].some(s => isReadOnlySchema(s, context));
+  }
+
+  if (Guard.isPrimitiveSchema(schema) || Guard.isArraySchema(schema) || Guard.isObjectSchema(schema)) {
+    return schema.readOnly;
+  }
+
+  return undefined;
+}
 
 export const generatePropertySignatures = (
   entryPoint: string,
@@ -23,21 +55,7 @@ export const generatePropertySignatures = (
   }
   const required: string[] = schema.required || [];
   return Object.entries(schema.properties)
-    .filter(([_, property]) => {
-      if (typeof property === "boolean") {
-        return true;
-      } else if (Guard.isReference(property)) {
-        const schemaName = property.$ref.match(/^#\/components\/schemas\/(.+)$/)?.[1];
-        if (!schemaName) return false;
-        const original = context.rootSchema.components?.schemas?.[schemaName];
-        if (!original || !Guard.isObjectSchema(original)) return false;
-        return !original.readOnly;
-      } else if (Guard.isObjectSchema(property)) {
-        return !property.readOnly;
-      } else {
-        return true;
-      }
-    })
+    .filter(([, schema]) => !isReadOnlySchema(schema, context))
     .map(([propertyName, property]) => {
       if (!property) {
         return factory.PropertySignature.create({
