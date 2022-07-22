@@ -279,7 +279,10 @@ export const convert: Convert = (
         });
       }
 
-      const value: ts.PropertySignature[] = Object.entries(schema.properties || {}).map(([name, jsonSchema]) => {
+      const value: ts.PropertySignature[] = Object.entries(schema.properties || {}).flatMap(([name, jsonSchema]) => {
+        if (option?.useClientSchema && typeof jsonSchema !== "boolean" && jsonSchema.readOnly) {
+          return [];
+        }
         return factory.PropertySignature.create({
           name: converterContext.escapePropertySignatureName(name),
           type: convert(entryPoint, currentPoint, factory, jsonSchema, context, converterContext, { ...option, parent: schema.properties }),
