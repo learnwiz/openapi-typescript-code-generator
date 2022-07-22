@@ -1,7 +1,6 @@
 {
-  "name": "@himenon/openapi-typescript-code-generator",
-  "version": "0.18.3",
-  "private": true,
+  "name": "@learnwiz/openapi-typescript-code-generator",
+  "version": "0.18.10",
   "description": "OpenAPI Code Generator using TypeScript AST.",
   "keywords": [
     "openapi",
@@ -11,13 +10,13 @@
     "typescript",
     "typescript-ast"
   ],
-  "homepage": "https://github.com/Himenon/openapi-typescript-code-generator#readme",
+  "homepage": "https://github.com/learnwiz/openapi-typescript-code-generator#readme",
   "bugs": {
-    "url": "https://github.com/Himenon/openapi-typescript-code-generator/issues"
+    "url": "https://github.com/learnwiz/openapi-typescript-code-generator/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Himenon/openapi-typescript-code-generator.git"
+    "url": "git@github.com:learnwiz/openapi-typescript-code-generator.git"
   },
   "license": "MIT",
   "author": {
