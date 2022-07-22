@@ -28,6 +28,10 @@ function isReadOnlySchema(schema: JSONSchema7Definition, context: ToTypeNode.Con
   }
 
   if (Guard.isAllOfSchema(schema)) {
+    const directReadOnly = schema.allOf.find(s => typeof s.readOnly !== "undefined");
+    if (directReadOnly) {
+      return directReadOnly.readOnly;
+    }
     return schema.allOf.map(s => isReadOnlySchema(s, context)).find((s): s is boolean => typeof s !== undefined);
   }
 
