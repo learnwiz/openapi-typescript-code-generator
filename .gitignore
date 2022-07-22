@@ -10,3 +10,4 @@ test/code
 test/openapi-3.0.json
 test/__tests__/__snapshots__/learnwiz-test.ts.snap
 debug
+.vscode
