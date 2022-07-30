@@ -28,15 +28,18 @@ function isReadOnlySchema(schema: JSONSchema7Definition, context: ToTypeNode.Con
   }
 
   if (Guard.isAllOfSchema(schema)) {
-    const directReadOnly = schema.allOf.find(s => typeof s.readOnly !== "undefined");
+    const directReadOnly = [...schema.allOf].reverse().find(s => typeof s.readOnly === "boolean");
     if (directReadOnly) {
       return directReadOnly.readOnly;
     }
-    return schema.allOf.map(s => isReadOnlySchema(s, context)).find((s): s is boolean => typeof s !== undefined);
+    return schema.allOf
+      .map(s => isReadOnlySchema(s, context))
+      .reverse()
+      .find((s): s is boolean => typeof s === "boolean");
   }
 
   if (Guard.isOneOfSchema(schema)) {
-    return [...schema.oneOf].some(s => isReadOnlySchema(s, context));
+    return schema.oneOf.some(s => isReadOnlySchema(s, context));
   }
 
   if (Guard.isPrimitiveSchema(schema) || Guard.isArraySchema(schema) || Guard.isObjectSchema(schema)) {
@@ -156,7 +159,7 @@ export const generateNotInferedTypeAlias = (
   name: string,
   schema: OpenApi.Schema,
   convertContext: ConvertContext.Types,
-) => {
+): ts.TypeAliasDeclaration => {
   const typeNode = createNullableTypeNodeOrAny(factory, schema);
   return factory.TypeAliasDeclaration.create({
     export: true,
