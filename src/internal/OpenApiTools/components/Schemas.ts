@@ -79,7 +79,7 @@ export const generateNamespace = (
         }),
       });
     }
-    const schema = InferredType.getInferredType(targetSchema);
+    let schema = InferredType.getInferredType(targetSchema);
     const path = `${basePath}/${name}`;
     if (!schema) {
       // Schemaが特定できないためWarningを出力する
@@ -93,6 +93,9 @@ export const generateNamespace = (
         },
         { override: true },
       );
+    }
+    if (Guard.isAdhocAllOfSchema(schema)) {
+      schema = ToTypeNode.mergeAdhoc(currentPoint, schema, context);
     }
     if (Guard.isAllOfSchema(schema)) {
       return store.addStatement(

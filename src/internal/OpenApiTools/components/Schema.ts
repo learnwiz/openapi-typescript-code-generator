@@ -214,6 +214,9 @@ export const addSchema = (
   if (!schema) {
     return;
   }
+  if (Guard.isAdhocAllOfSchema(schema)) {
+    schema = ToTypeNode.mergeAdhoc(currentPoint, schema, context);
+  }
   if (Guard.isAllOfSchema(schema)) {
     store.addStatement(targetPoint, {
       kind: "typeAlias",
