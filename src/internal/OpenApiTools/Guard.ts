@@ -66,6 +66,16 @@ export const isAnyOfSchema = (schema: OpenApi.Schema): schema is Types.AnyOfSche
   return !!schema.anyOf && typeof schema.anyOf !== "boolean" && Array.isArray(schema.anyOf);
 };
 
+export const isAdhocAllOfSchema = (
+  schema: OpenApi.JSONSchema,
+): schema is Types.AllOfSchema & {
+  allOf: [OpenApi.Reference, OpenApi.JSONSchema];
+} => {
+  if (!isAllOfSchema(schema)) return false;
+  const [maybeReference, maybeAdhoc, ...rest] = schema.allOf;
+  return isReference(maybeReference) && !("type" in maybeAdhoc) && !isReference(maybeAdhoc) && rest.length === 0;
+};
+
 export const isComponentName = (name: string): name is Def.ComponentName => {
   return ["schemas", "headers", "responses", "parameters", "requestBodies", "securitySchemes", "pathItems"].includes(name);
 };

@@ -9,7 +9,7 @@ import * as Reference from "./components/Reference";
 import * as ConverterContext from "./ConverterContext";
 import * as Guard from "./Guard";
 import * as InferredType from "./InferredType";
-import { ObjectSchemaWithAdditionalProperties } from "./types";
+import { AllOfSchema, ObjectSchemaWithAdditionalProperties } from "./types";
 
 export interface ResolveReferencePath {
   name: string;
@@ -43,6 +43,19 @@ export interface Option {
   parent?: any;
   useClientSchema?: boolean;
 }
+
+export const mergeAdhoc = (
+  currentPoint: string,
+  schema: AllOfSchema & {
+    allOf: [OpenApi.Reference, OpenApi.JSONSchema];
+  },
+  context: Context,
+): OpenApi.JSONSchema => {
+  const [reference, adhoc] = schema.allOf;
+  const { pathArray } = context.resolveReferencePath(currentPoint, reference.$ref);
+  const resolvedSchema = DotProp.get<OpenApi.JSONSchema>(context.rootSchema, pathArray.join("."));
+  return { ...resolvedSchema, ...adhoc };
+};
 
 export const generateMultiTypeNode = (
   entryPoint: string,
@@ -135,6 +148,10 @@ export const convert: Convert = (
     }
     // サポートしていないディレクトリに存在する場合、直接Interface、もしくはTypeAliasを作成
     return convert(entryPoint, reference.referencePoint, factory, reference.data, context, converterContext, { ...option, parent: schema });
+  }
+
+  if (Guard.isAdhocAllOfSchema(schema)) {
+    return convert(entryPoint, currentPoint, factory, mergeAdhoc(currentPoint, schema, context), context, converterContext, option);
   }
 
   if (Guard.isOneOfSchema(schema)) {
