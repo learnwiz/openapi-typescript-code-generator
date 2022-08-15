@@ -1,4 +1,4 @@
-import ts, { skipPartiallyEmittedExpressions } from "typescript";
+import ts from "typescript";
 
 import type { OpenApi } from "../../../types";
 import { FeatureDevelopmentError } from "../../Exception";

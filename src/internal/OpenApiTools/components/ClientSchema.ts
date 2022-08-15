@@ -1,5 +1,3 @@
-import DotProp from "dot-prop";
-import type { JSONSchema7Definition } from "json-schema";
 import ts from "typescript";
 
 import type { OpenApi } from "../../../types";
@@ -11,39 +9,6 @@ import * as ToTypeNode from "../toTypeNode";
 import type { AnySchema, ArraySchema, ObjectSchema, PrimitiveSchema } from "../types";
 import type * as Walker from "../Walker";
 import * as ExternalDocumentation from "./ExternalDocumentation";
-
-function isReadOnlySchema(currentPoint: string, schema: JSONSchema7Definition, context: ToTypeNode.Context): boolean | undefined {
-  if (Guard.isReference(schema)) {
-    const { pathArray } = context.resolveReferencePath(currentPoint, schema.$ref);
-    schema = DotProp.get(context.rootSchema, pathArray.join(".")) as any;
-  }
-
-  if (typeof schema === "boolean") {
-    return undefined;
-  }
-
-  if (Guard.isAllOfSchema(schema)) {
-    const directReadOnly = [...schema.allOf].reverse().find(s => typeof s.readOnly === "boolean");
-    if (directReadOnly) {
-      return directReadOnly.readOnly;
-    }
-
-    return schema.allOf
-      .map(s => isReadOnlySchema(currentPoint, s, context))
-      .reverse()
-      .find((s): s is boolean => typeof s === "boolean");
-  }
-
-  if (Guard.isOneOfSchema(schema)) {
-    return schema.oneOf.some(s => isReadOnlySchema(currentPoint, s, context));
-  }
-
-  if (Guard.isPrimitiveSchema(schema) || Guard.isArraySchema(schema) || Guard.isObjectSchema(schema)) {
-    return schema.readOnly;
-  }
-
-  return undefined;
-}
 
 export const generatePropertySignatures = (
   entryPoint: string,
@@ -58,7 +23,7 @@ export const generatePropertySignatures = (
   }
   const required: string[] = schema.required || [];
   return Object.entries(schema.properties)
-    .filter(([, schema]) => !isReadOnlySchema(currentPoint, schema, context))
+    .filter(([, schema]) => !ToTypeNode.isRwOnlySchema(currentPoint, schema, context, "read"))
     .map(([propertyName, property]) => {
       if (!property) {
         return factory.PropertySignature.create({

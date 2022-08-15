@@ -44,6 +44,44 @@ export interface Option {
   useClientSchema?: boolean;
 }
 
+export const isRwOnlySchema = (
+  currentPoint: string,
+  schema: OpenApi.Schema | OpenApi.Reference | OpenApi.JSONSchemaDefinition,
+  context: Context,
+  type: "read" | "write",
+): boolean | undefined => {
+  if (Guard.isReference(schema)) {
+    const { pathArray } = context.resolveReferencePath(currentPoint, schema.$ref);
+    schema = DotProp.get(context.rootSchema, pathArray.join(".")) as any;
+  }
+
+  if (typeof schema === "boolean") {
+    return undefined;
+  }
+
+  if (Guard.isAdhocAllOfSchema(schema)) {
+    schema = mergeAdhoc(currentPoint, schema, context);
+  }
+
+  if (Guard.isAllOfSchema(schema)) {
+    const directRwOnly = schema.allOf.find(s => typeof s[`${type}Only`] !== "undefined");
+    if (directRwOnly) {
+      return directRwOnly[`${type}Only`];
+    }
+    return schema.allOf.map(s => isRwOnlySchema(currentPoint, s, context, type)).find((s): s is boolean => typeof s !== undefined);
+  }
+
+  if (Guard.isOneOfSchema(schema)) {
+    return [...schema.oneOf].some(s => isRwOnlySchema(currentPoint, s, context, type));
+  }
+
+  if (Guard.isPrimitiveSchema(schema) || Guard.isArraySchema(schema) || Guard.isObjectSchema(schema)) {
+    return schema[`${type}Only`];
+  }
+
+  return undefined;
+};
+
 export const mergeAdhoc = (
   currentPoint: string,
   schema: AllOfSchema & {
@@ -296,17 +334,16 @@ export const convert: Convert = (
         });
       }
 
-      const value: ts.PropertySignature[] = Object.entries(schema.properties || {}).flatMap(([name, jsonSchema]) => {
-        if (option?.useClientSchema && typeof jsonSchema !== "boolean" && jsonSchema.readOnly) {
-          return [];
-        }
-        return factory.PropertySignature.create({
-          name: converterContext.escapePropertySignatureName(name),
-          type: convert(entryPoint, currentPoint, factory, jsonSchema, context, converterContext, { ...option, parent: schema.properties }),
-          optional: !required.includes(name),
-          comment: typeof jsonSchema !== "boolean" ? jsonSchema.description : undefined,
+      const value: ts.PropertySignature[] = Object.entries(schema.properties || {})
+        .filter(([, jsonSchema]) => !(option?.useClientSchema && isRwOnlySchema(currentPoint, jsonSchema, context, "read")))
+        .map(([name, jsonSchema]) => {
+          return factory.PropertySignature.create({
+            name: converterContext.escapePropertySignatureName(name),
+            type: convert(entryPoint, currentPoint, factory, jsonSchema, context, converterContext, { ...option, parent: schema.properties }),
+            optional: !required.includes(name),
+            comment: typeof jsonSchema !== "boolean" ? jsonSchema.description : undefined,
+          });
         });
-      });
       if (schema.additionalProperties) {
         const additionalProperties = factory.IndexSignatureDeclaration.create({
           name: "key",
