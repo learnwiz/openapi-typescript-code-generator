@@ -1,6 +1,6 @@
 {
   "name": "@learnwiz/openapi-typescript-code-generator",
-  "version": "0.18.11",
+  "version": "0.18.12",
   "description": "OpenAPI Code Generator using TypeScript AST.",
   "keywords": [
     "openapi",
