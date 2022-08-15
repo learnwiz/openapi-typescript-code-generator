@@ -20,6 +20,7 @@ const generatePath = (entryPoint: string, currentPoint: string, referencePath: s
   const base = Path.dirname(from).replace(Path.sep, "/");
   const result = Path.posix.relative(base, referencePath); // remoteの場合? localの場合 referencePath.split("/")
   const pathArray = result.split("/");
+  if (pathArray[0] === "#") pathArray.shift();
   return {
     pathArray,
     base,
