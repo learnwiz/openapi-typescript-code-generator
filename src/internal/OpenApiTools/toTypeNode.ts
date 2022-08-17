@@ -125,7 +125,7 @@ export const generateMultiTypeNode = (
   });
 };
 
-const nullable = (factory: Factory.Type, typeNode: ts.TypeNode, nullable: boolean): ts.TypeNode => {
+export const nullable = (factory: Factory.Type, typeNode: ts.TypeNode, nullable: boolean): ts.TypeNode => {
   if (nullable) {
     return factory.UnionTypeNode.create({
       typeNodes: [

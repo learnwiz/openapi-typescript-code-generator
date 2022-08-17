@@ -168,7 +168,7 @@ export const generateTypeAlias = (
   return factory.TypeAliasDeclaration.create({
     export: true,
     name: convertContext.escapeDeclarationText(name),
-    type,
+    type: ToTypeNode.nullable(factory, type, !!schema.nullable),
     comment: [schema.title, schema.description].filter(v => !!v).join("\n\n"),
   });
 };
