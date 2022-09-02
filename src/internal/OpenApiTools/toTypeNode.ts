@@ -60,6 +60,7 @@ export const isRwOnlySchema = (
   }
 
   if (Guard.isAdhocAllOfSchema(schema)) {
+    if (schema.allOf[1][`${type}Only`]) return true;
     schema = mergeAdhoc(currentPoint, schema, context);
   }
 
